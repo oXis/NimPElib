@@ -1,4 +1,5 @@
 import wintypes
+import datadirectory
 
 type
     IMAGE_FILE_HEADER* {.pure.} = object
@@ -10,15 +11,6 @@ type
         SizeOfOptionalHeader*: WORD
         Characteristics*: WORD
     PIMAGE_FILE_HEADER* = ptr IMAGE_FILE_HEADER
-
-type
-    IMAGE_DATA_DIRECTORY* {.pure.} = object
-        VirtualAddress*: DWORD
-        Size*: DWORD
-    PIMAGE_DATA_DIRECTORY* = ptr IMAGE_DATA_DIRECTORY
-
-const
-    IMAGE_NUMBEROF_DIRECTORY_ENTRIES* = 16
 
 type
     IMAGE_OPTIONAL_HEADER64* {.pure.} = object
@@ -61,18 +53,5 @@ type
         OptionalHeader*: IMAGE_OPTIONAL_HEADER64
     PIMAGE_NT_HEADERS64* = ptr IMAGE_NT_HEADERS64
 
-
-type 
-    NTHeader* = object
-        header: PIMAGE_NT_HEADERS64
-
-proc `header=`*(s: var NTHeader, value: PIMAGE_NT_HEADERS64) {.inline.} =
-  ## setter of host address
-  s.header = value
-
-proc header*(s: NTHeader): PIMAGE_NT_HEADERS64 {.inline.} =
-  ## getter of host address
-  s.header
-
-proc size*(s: NTHeader): int {.inline.} =
-    s.header[].sizeof
+proc size*(s: IMAGE_NT_HEADERS64): int {.inline.} =
+    s.sizeof

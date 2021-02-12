@@ -23,18 +23,6 @@ type
         e_lfanew*: LONG
     PIMAGE_DOS_HEADER* = ptr IMAGE_DOS_HEADER
 
-type
-    DOSHeaderType* = object
-        header: PIMAGE_DOS_HEADER
-
-proc `header=`*(s: var DOSHeaderType, value: PIMAGE_DOS_HEADER) {.inline.} =
-  ## setter of host address
-  s.header = value
-
-proc header*(s: DOSHeaderType): PIMAGE_DOS_HEADER {.inline.} =
-  ## getter of host address
-  s.header
-
-proc size*(s: DOSHeaderType): int {.inline.} =
-    s.header[].sizeof
+proc size*(s: IMAGE_DOS_HEADER): int {.inline.} =
+    s.sizeof
     

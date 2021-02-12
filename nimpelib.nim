@@ -1,55 +1,44 @@
-# import streams
+import streams
 import memfiles
 import utils
 
-# import wintypes
-import dosHeader
-import ntHeader
+import wintypes
+import dosheader
+import ntheader
+import datadirectory
 
-proc `+`(a:pointer,p:int): pointer =
-  result = cast[pointer](cast[int](a) + p)
+# proc `+`(a:pointer,p:int): pointer =
+#   result = cast[pointer](cast[int](a) + p)
 
 type
     PE = object
-        dosHeader: DOSHeaderType
-        ntheader: NTHeader
+        dosHeader: IMAGE_DOS_HEADER
+        ntheader: IMAGE_NT_HEADERS64
 
-proc newPE(buffer: pointer): PE =
+proc newPE(binPath: string): PE =
 
-    var dosheader: DOSHeaderType
-    dosheader.header = cast[PIMAGE_DOS_HEADER](buffer)
+    let stream = newFileStream(binPath, mode = fmRead)
+    defer: stream.close()
 
-    var ntheader: NTHeader
-    ntheader.header = cast[PIMAGE_NT_HEADERS64](buffer + dosheader.header.e_lfanew)
+    result = PE()
 
-    PE(dosHeader: dosheader, ntheader: ntheader)
+    stream.read(result.dosheader)
 
-proc mapBin(binPath: string): pointer =
-    var inp = memfiles.open(binPath)
-
-    return inp.mem
-
-# proc read_bin(binPath: string): array[64, byte] =
-
-#     let stream = newFileStream(binPath, mode = fmRead)
-#     defer: stream.close()
-
-#     var buffer: array[64, byte]
-#     discard stream.readData(addr buffer, 64)
-
-#     return buffer
+    stream.setPosition(result.dosheader.e_lfanew)
+    stream.read(result.ntheader)
 
 when isMainModule:
 
     let fileName: string = "./nimpelib.exe"
 
-    var file = mapBin(fileName)
+    var pe = newPE(fileName)
 
-    # var buffer = read_bin(fileName)
+    echo pe.dosHeader.e_magic.hexDump
+    pe.dosHeader.e_magic = 0x0000
+    echo pe.dosHeader.e_magic.hexDump
 
-    var pefile: PE = newPE(file)
+    echo pe.ntheader.OptionalHeader.Magic.hexDump
+    pe.ntheader.OptionalHeader.Magic = 0x0000
+    echo pe.ntheader.OptionalHeader.Magic.hexDump
 
-    # e_magic
-    echo pefile.dosHeader.header.e_magic.charDump
-    echo pefile.ntheader.header.Signature.charDump
-    echo pefile.ntheader.header.OptionalHeader.Magic.hexDump
+    echo pe.ntheader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size.hexDump

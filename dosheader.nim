@@ -22,7 +22,4 @@ type
         e_res2*: array[10, WORD]
         e_lfanew*: LONG
     PIMAGE_DOS_HEADER* = ptr IMAGE_DOS_HEADER
-
-proc size*(s: IMAGE_DOS_HEADER): int {.inline.} =
-    s.sizeof
     

@@ -52,6 +52,3 @@ type
         FileHeader*: IMAGE_FILE_HEADER
         OptionalHeader*: IMAGE_OPTIONAL_HEADER64
     PIMAGE_NT_HEADERS64* = ptr IMAGE_NT_HEADERS64
-
-proc size*(s: IMAGE_NT_HEADERS64): int {.inline.} =
-    s.sizeof

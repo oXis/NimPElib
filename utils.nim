@@ -38,3 +38,6 @@ proc alignOffset*[T](uiOffset: T, uiAlignment: T): T =
         return uiOffset + (uiAlignment - uiOffset mod uiAlignment)
     else:
         return uiOffset
+
+proc SectionNametoString*(bytes: array[8, byte]): cstring =
+  return cast[cstring](bytes.unsafeAddr)

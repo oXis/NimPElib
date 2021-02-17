@@ -1,30 +1,24 @@
 import streams
-import utils
+import strutils
 
+import utils
+import pefile
 import wintypes
 import dosheader
 import ntheader
-import datadirectory
 import sectionheader
-
-import strutils
+import datadirectory
+import tlsdirectory
 
 # proc `+`(a:pointer,p:int): pointer =
 #   result = cast[pointer](cast[int](a) + p)
 
-type
-    PE = object
-        dosHeader: IMAGE_DOS_HEADER
-        ntHeader: IMAGE_NT_HEADERS64
-        sectionHeader: seq[IMAGE_SECTION_HEADER]
-        sectionData: seq[seq[byte]]
-
-proc newPE(binPath: string): PE =
+proc newPE(binPath: string): PE64 =
 
     let stream = newFileStream(binPath, mode = fmRead)
     defer: stream.close()
 
-    result = PE()
+    result = PE64()
 
     stream.read(result.dosheader)
 
@@ -47,19 +41,20 @@ proc newPE(binPath: string): PE =
 
         discard stream.readData(addr result.sectionData[i][0], s.SizeOfRawData)
 
+    stream.setPosition(result.rvaToOffset(result.ntHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress))
+    stream.read(result.tlsDirectory)
+
     # echo stream.readUint16().hexDump << SECTION HEADER starts
 
 when isMainModule:
 
-    let fileName: string = "./nimpelib.exe"
+    let fileName: string = "./PE-bear.exe"
 
     var pe = newPE(fileName)
 
     echo "PE Header: ", pe.dosHeader.e_magic.toHex
 
     echo "NT Header: ", pe.ntHeader.OptionalHeader.Magic.toHex
-
-    echo "IMAGE_DIRECTORY_ENTRY_IMPORT: ", pe.ntHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size.toHex
 
     echo "SectionAlignment: ", pe.ntHeader.OptionalHeader.SectionAlignment.toHex
     var offset: int = pe.dosheader.sizeof + pe.ntHeader.sizeof + pe.sectionHeader[0].sizeof * pe.ntHeader.FileHeader.NumberOfSections.int
@@ -77,3 +72,7 @@ when isMainModule:
             discard
 
         offset += pe.sectionHeader[i].SizeOfRawData
+
+    echo "IMAGE_DIRECTORY_ENTRY_IMPORT: ", pe.ntHeader.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress.toHex
+
+    echo pe.tlsDirectory.StartAddressOfRawData.toHex
